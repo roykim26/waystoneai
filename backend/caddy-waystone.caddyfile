@@ -1,0 +1,31 @@
+# Waystone 目录站 vhost。追加到 /opt/jpqm/deploy/caddy/Caddyfile 末尾。
+# waystone 容器不在 jpqm 的 compose 里：独立容器（镜像 waystone:latest），
+# bind mount /opt/waystone/{site,data,.env}，接 deploy_default 网络，
+# 由 Caddy 反代 waystone:3000。新机器重建时需单独起该容器，否则此 vhost 答 502。
+# 改完必须显式 reload：docker exec deploy-caddy-1 caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+
+www.waystoneai.online {
+	redir https://waystoneai.online{uri} permanent
+}
+
+waystoneai.online {
+	encode br zstd gzip
+
+	log {
+		output file /var/log/caddy/waystone-access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+		format json
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+
+	reverse_proxy waystone:3000
+}

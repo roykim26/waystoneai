@@ -1,0 +1,19 @@
+{
+  "name": "waystone-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Self-hosted submission backend for waystoneai.online (form intake + admin follow-up + free-tier backlink verification).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "node-cron": "^3.0.3"
+  }
+}

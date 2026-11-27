@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 200" role="img" aria-labelledby="title">
+  <title id="title">Waystone AI</title>
+  <g transform="translate(2 2)">
+    <path d="M34 20 L126 14 L164 42 L160 174 L34 180 L22 52 Z" fill="#1B1E20"/>
+    <path d="M50 56 L73 140 L96 96 L119 140 L142 56" fill="none" stroke="#F4F0E6" stroke-width="16" stroke-linejoin="miter" stroke-linecap="square"/>
+  </g>
+</svg>

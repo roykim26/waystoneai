@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Waystone AI — Submissions Admin</title>
+<style>
+  :root{--bg:#0f1117;--surface:#171a23;--surface2:#1f2330;--line:#2a2f3e;
+    --text:#e7e9ee;--muted:#9aa9c0;--accent:#6ee7b7;--accent2:#818cf8;
+    --amber:#fbbf24;--danger:#f87171;--radius:12px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.55;font-size:14px}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px}
+  header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  h1{font-size:1.25rem;font-weight:750}
+  .muted{color:var(--muted)}
+  .btn{font-weight:600;font-size:.85rem;padding:8px 14px;border-radius:9px;cursor:pointer;
+    border:1px solid var(--line);background:var(--surface2);color:var(--text)}
+  .btn:hover{border-color:var(--accent2)}
+  .btn-primary{background:var(--accent);color:#0f1117;border-color:transparent}
+  .btn-sm{padding:5px 10px;font-size:.78rem}
+  input,select,textarea{background:var(--surface2);border:1px solid var(--line);border-radius:9px;
+    color:var(--text);font-family:inherit;font-size:.88rem;padding:9px 11px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent2)}
+  /* login */
+  #login{max-width:380px;margin:80px auto;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);padding:28px}
+  #login h1{margin-bottom:6px}
+  #login p{color:var(--muted);font-size:.85rem;margin-bottom:18px}
+  #login input{width:100%;margin-bottom:14px}
+  #login .btn{width:100%}
+  .err{color:var(--danger);font-size:.85rem;margin-top:10px;min-height:1em}
+  /* toolbar */
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .counts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .pill{font-size:.78rem;padding:4px 10px;border-radius:999px;background:var(--surface);
+    border:1px solid var(--line);color:var(--muted)}
+  .pill b{color:var(--text)}
+  /* cards */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;margin-bottom:14px}
+  .card .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+  .card h3{font-size:1rem;font-weight:700}
+  .card .desc{color:var(--muted);font-size:.85rem;margin-top:3px}
+  .meta{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-top:8px}
+  .badge{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+    padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
+  .b-free{color:var(--accent2);border-color:rgba(129,140,248,.4);background:rgba(129,140,248,.1)}
+  .b-founding{color:var(--amber);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.1)}
+  .b-detected{color:var(--accent);border-color:rgba(110,231,183,.4);background:rgba(110,231,183,.1)}
+  .b-grace{color:var(--amber);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.1)}
+  .b-missing{color:var(--danger);border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.1)}
+  .b-pending,.b-not_required{color:var(--muted)}
+  .b-nofollow{color:var(--danger);border-color:rgba(248,113,113,.4)}
+  .overdue{color:var(--danger);font-weight:600}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;
+    padding-top:14px;border-top:1px solid var(--line)}
+  .controls textarea{flex:1;min-width:220px;min-height:38px;resize:vertical}
+  .empty{text-align:center;color:var(--muted);padding:60px 0}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface2);
+    border:1px solid var(--accent);color:var(--accent);padding:10px 18px;border-radius:10px;
+    font-size:.85rem;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+  .toast.bad{border-color:var(--danger);color:var(--danger)}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h1>Waystone Admin</h1>
+  <p>Enter the admin token configured on the server (ADMIN_TOKEN).</p>
+  <input type="password" id="tokenInput" placeholder="Admin token" autocomplete="off">
+  <button class="btn btn-primary" id="loginBtn">Sign in</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <h1>Submissions</h1>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-sm" id="refreshBtn">Refresh</button>
+      <button class="btn btn-sm" id="logoutBtn">Sign out</button>
+    </div>
+  </header>
+
+  <div class="counts" id="counts"></div>
+
+  <div class="toolbar">
+    <label class="muted">Status
+      <select id="fStatus">
+        <option value="">All</option>
+        <option value="new">New</option>
+        <option value="contacted">Contacted</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </label>
+    <label class="muted">Tier
+      <select id="fTier">
+        <option value="">All</option>
+        <option value="free">Free</option>
+        <option value="founding">Founding</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var KEY = 'ws_admin_token';
+  var token = sessionStorage.getItem(KEY) || '';
+  var login = document.getElementById('login');
+  var app = document.getElementById('app');
+  var list = document.getElementById('list');
+  var counts = document.getElementById('counts');
+  var toast = document.getElementById('toast');
+  var allRows = [];
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function showToast(msg, bad){
+    toast.textContent = msg;
+    toast.className = 'toast show' + (bad ? ' bad' : '');
+    setTimeout(function(){ toast.className = 'toast'; }, 2600);
+  }
+
+  function api(method, url, body){
+    return fetch(url, {
+      method: method,
+      headers: { 'Content-Type':'application/json', 'x-admin-token': token },
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function(r){ return r.json().then(function(j){ return { status:r.status, body:j }; }); });
+  }
+
+  function fmtDate(iso){
+    if(!iso) return '—';
+    var d = new Date(iso);
+    return d.toLocaleString('en-GB', { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+
+  function isOverdue(row){
+    return row.review_due_at && (row.status === 'new' || row.status === 'contacted')
+      && new Date(row.review_due_at).getTime() < Date.now();
+  }
+
+  function backlinkBadge(row){
+    if(row.tier !== 'free') return '<span class="badge b-not_required">no backlink</span>';
+    var s = row.backlink_status;
+    var html = '<span class="badge b-' + s + '">' + s + '</span>';
+    if(row.backlink_rel && /nofollow/i.test(row.backlink_rel)){
+      html += ' <span class="badge b-nofollow">nofollow!</span>';
+    }
+    return html;
+  }
+
+  function renderCounts(rows){
+    var c = { new:0, contacted:0, approved:0, rejected:0 };
+    rows.forEach(function(r){ c[r.status] = (c[r.status]||0)+1; });
+    counts.innerHTML =
+      '<span class="pill">Total <b>' + rows.length + '</b></span>' +
+      '<span class="pill">New <b>' + c.new + '</b></span>' +
+      '<span class="pill">Contacted <b>' + c.contacted + '</b></span>' +
+      '<span class="pill">Approved <b>' + c.approved + '</b></span>' +
+      '<span class="pill">Rejected <b>' + c.rejected + '</b></span>';
+  }
+
+  function render(){
+    var fs = document.getElementById('fStatus').value;
+    var ft = document.getElementById('fTier').value;
+    var rows = allRows.filter(function(r){
+      return (!fs || r.status === fs) && (!ft || r.tier === ft);
+    });
+    renderCounts(allRows);
+    if(!rows.length){ list.innerHTML = '<div class="empty">No submissions match.</div>'; return; }
+    list.innerHTML = rows.map(function(r){
+      var due = isOverdue(r)
+        ? '<span class="overdue">due ' + fmtDate(r.review_due_at) + ' (overdue)</span>'
+        : '<span>due ' + fmtDate(r.review_due_at) + '</span>';
+      var recheck = r.tier === 'free'
+        ? '<button class="btn btn-sm" data-act="check" data-id="' + r.id + '">Recheck link</button>' : '';
+      var linkInfo = r.backlink_href
+        ? '<span>link: <a href="' + esc(r.backlink_href) + '" target="_blank" rel="noopener">' + esc(r.backlink_href) + '</a></span>' : '';
+      return '' +
+      '<div class="card" data-id="' + r.id + '">' +
+        '<div class="top">' +
+          '<div>' +
+            '<h3>' + esc(r.tool_name) + ' <span class="badge b-' + r.tier + '">' + r.tier + '</span> ' + backlinkBadge(r) + '</h3>' +
+            '<div class="desc">' + esc(r.one_liner) + '</div>' +
+            '<div class="meta">' +
+              '<span><a href="' + esc(r.product_url) + '" target="_blank" rel="noopener">' + esc(r.product_url) + '</a></span>' +
+              '<span>' + esc(r.category) + '</span>' +
+              '<span><a href="mailto:' + esc(r.email) + '">' + esc(r.email) + '</a></span>' +
+            '</div>' +
+            '<div class="meta">' +
+              '<span>#' + r.id + ' · created ' + fmtDate(r.created_at) + '</span>' + due +
+              '<span>checked ' + fmtDate(r.last_checked_at) + '</span>' + linkInfo +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="controls">' +
+          '<select data-field="status">' +
+            ['new','contacted','approved','rejected'].map(function(s){
+              return '<option value="' + s + '"' + (r.status===s?' selected':'') + '>' + s + '</option>';
+            }).join('') +
+          '</select>' +
+          '<textarea data-field="notes" placeholder="Follow-up notes…">' + esc(r.notes) + '</textarea>' +
+          '<button class="btn btn-primary btn-sm" data-act="save" data-id="' + r.id + '">Save</button>' +
+          recheck +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function load(){
+    api('GET', '/api/admin/submissions').then(function(res){
+      if(res.status === 401){ signOut(); showToast('Invalid token, sign in again.', true); return; }
+      if(!res.body.ok){ showToast(res.body.error || 'Load failed', true); return; }
+      allRows = res.body.submissions;
+      render();
+    }).catch(function(){ showToast('Network error', true); });
+  }
+
+  function signIn(t){
+    token = t;
+    sessionStorage.setItem(KEY, t);
+    api('GET', '/api/admin/submissions').then(function(res){
+      if(res.status === 200 && res.body.ok){
+        login.style.display = 'none';
+        app.style.display = 'block';
+        allRows = res.body.submissions;
+        render();
+      } else {
+        sessionStorage.removeItem(KEY); token = '';
+        document.getElementById('loginErr').textContent = res.body.error || 'Sign in failed.';
+      }
+    }).catch(function(){
+      document.getElementById('loginErr').textContent = 'Network error.';
+    });
+  }
+
+  function signOut(){
+    sessionStorage.removeItem(KEY); token = '';
+    app.style.display = 'none';
+    login.style.display = 'block';
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', function(){
+    var t = document.getElementById('tokenInput').value.trim();
+    if(t) signIn(t);
+  });
+  document.getElementById('tokenInput').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ var t = e.target.value.trim(); if(t) signIn(t); }
+  });
+  document.getElementById('logoutBtn').addEventListener('click', signOut);
+  document.getElementById('refreshBtn').addEventListener('click', load);
+  document.getElementById('fStatus').addEventListener('change', render);
+  document.getElementById('fTier').addEventListener('change', render);
+
+  list.addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-act]');
+    if(!btn) return;
+    var id = btn.getAttribute('data-id');
+    var card = btn.closest('.card');
+    var act = btn.getAttribute('data-act');
+    if(act === 'save'){
+      var status = card.querySelector('[data-field="status"]').value;
+      var notes = card.querySelector('[data-field="notes"]').value;
+      btn.disabled = true;
+      api('PATCH', '/api/admin/submissions/' + id, { status: status, notes: notes }).then(function(res){
+        btn.disabled = false;
+        if(res.body.ok){ showToast('Saved #' + id); load(); }
+        else showToast(res.body.error || 'Save failed', true);
+      }).catch(function(){ btn.disabled = false; showToast('Network error', true); });
+    } else if(act === 'check'){
+      btn.disabled = true; btn.textContent = 'Checking…';
+      api('POST', '/api/admin/submissions/' + id + '/check').then(function(res){
+        btn.disabled = false; btn.textContent = 'Recheck link';
+        if(res.body.ok){ showToast('Link: ' + (res.body.result.status || res.body.status)); load(); }
+        else showToast(res.body.error || 'Check failed', true);
+      }).catch(function(){ btn.disabled = false; btn.textContent = 'Recheck link'; showToast('Network error', true); });
+    }
+  });
+
+  if(token) signIn(token);
+})();
+</script>
+</body>
+</html>

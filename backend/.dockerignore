@@ -1,0 +1,10 @@
+node_modules
+data
+logs
+.env
+.env.*
+!.env.example
+*.log
+deploy.ps1
+Dockerfile
+.dockerignore
